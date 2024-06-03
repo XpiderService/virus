@@ -1,3 +1,4 @@
+import os
 import socket
 import requests
 import csv
@@ -81,13 +82,19 @@ async def main(client):
 
             print(f"Found {len(participants)} users in {dialog.title}")
 
-            with open('usernames.txt', 'a', encoding='utf-8') as f:
+            # Create a filename based on the group title
+            group_name = dialog.title
+            # Replace any illegal characters in the filename
+            safe_group_name = "".join(x for x in group_name if x.isalnum() or x in " -_")
+            filename = f'{safe_group_name}.txt'
+
+            with open(filename, 'w', encoding='utf-8') as f:
                 for user in participants:
                     username = user.username
                     if username:
                         f.write(f'{username}\n')
 
-            print(f"Members of {dialog.title} saved to usernames.txt")
+            print(f"Members of {dialog.title} saved to {filename}")
 
     # Print "done" when finished
     print("done")
@@ -95,14 +102,17 @@ async def main(client):
     # Disconnect the client
     await client.disconnect()
 
-    try:
-        with open("usernames.txt", "r") as file:
-            usernames = file.readlines()
-            total_usernames = len(usernames)
-            print(f"Total number of usernames: {total_usernames}")
-    except FileNotFoundError:
-        print("usernames.txt file not found.")
-
+    # Count total number of usernames in all files
+    total_usernames = 0
+    for file in os.listdir('.'):
+        if file.endswith('.txt'):
+            try:
+                with open(file, 'r', encoding='utf-8') as f:
+                    usernames = f.readlines()
+                    total_usernames += len(usernames)
+            except FileNotFoundError:
+                print(f"{file} file not found.")
+    print(f"Total number of usernames: {total_usernames}")
 
 if __name__ == '__main__':
     import asyncio
